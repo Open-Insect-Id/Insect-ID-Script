@@ -1,5 +1,4 @@
 onnxruntime
 numpy
-torchvision
 Pillow
 ijson

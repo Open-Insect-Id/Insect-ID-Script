@@ -2,3 +2,4 @@ onnxruntime
 numpy
 Pillow
 ijson
+requests

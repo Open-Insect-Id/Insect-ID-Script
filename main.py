@@ -1,6 +1,7 @@
 import onnxruntime as ort
 import numpy as np
 from PIL import Image
+import requests
 import ijson
 import sys
 import os
@@ -47,6 +48,48 @@ for item in especes:
         espece_classes.append(item)
 espece_classes.sort()
 
+def get_species_info(species_name):
+    search_url = "https://api.gbif.org/v1/species/search"
+    params = {'q': species_name}
+    headers = {'User-Agent': 'Insect-ID-Script/1.0'}
+    response = requests.get(search_url, params=params, headers=headers)
+    
+    if response.status_code != 200:
+        return "Erreur lors de la requête API"
+    
+    data = response.json()
+    if not data['results']:
+        return "Aucune espèce trouvée pour ce nom"
+    
+    species_id = data['results'][0]['key']
+    
+    species_url = f"https://api.gbif.org/v1/species/{species_id}"
+    species_response = requests.get(species_url, headers=headers)
+    
+    if species_response.status_code != 200:
+        return "Erreur lors de la récupération des détails"
+    
+    species_data = species_response.json()
+    
+    info = {
+        "nom_scientifique": species_data.get("scientificName"),
+        "nom_commun": species_data.get("vernacularName"),
+        "rang_taxonomique": species_data.get("rank"),
+        "phylum": species_data.get("phylum"),
+        "classe": species_data.get("class"),
+        "ordre": species_data.get("order"),
+        "famille": species_data.get("family"),
+        "genre": species_data.get("genus"),
+        "espece": species_data.get("species"),
+        "description": species_data.get("description"),
+        "distribution": species_data.get("distribution"),
+        "references": species_data.get("references"),
+        "url_gbif": f"https://www.gbif.org/species/{species_id}"
+    }
+    
+    return info
+
+
 def process_image(image_path):
     if not os.path.exists(image_path):
         print(f"Erreur : Le fichier {image_path} n'existe pas.")
@@ -72,13 +115,21 @@ def process_image(image_path):
 
     outputs = session.run(output_names, {input_name: input_tensor})
 
+    full_name = ""
+    name_str = ""
     for name, output in zip(output_names, outputs):
         predicted = np.argmax(output, axis=1)[0]
         classes = globals()[f"{name}_classes"]
         if predicted < len(classes):
             print(f"  {name}: {classes[predicted]}")
+            full_name += f"{classes[predicted]} "
+            name_str += f"{classes[predicted]} " if name != "espece" else ""
         else:
             print(f"  {name}: Unknown")
+    print(full_name)
+    print(f"Informations sur l'espèce : {name_str.strip()}")
+    print(get_species_info(name_str.strip()))
+
 
 if len(sys.argv) == 1:
     # Pas d'arg, traiter toutes les images du dossier

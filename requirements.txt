@@ -3,3 +3,4 @@ numpy
 Pillow
 ijson
 requests
+colorama

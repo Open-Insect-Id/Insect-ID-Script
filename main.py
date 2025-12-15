@@ -6,6 +6,7 @@ import ijson
 import sys
 import os
 import glob
+import colorama
 
 session = ort.InferenceSession("insect_model.onnx")
 
@@ -95,7 +96,15 @@ def process_image(image_path):
         print(f"Erreur : Le fichier {image_path} n'existe pas.")
         return
 
-    print(f"Traitement de {image_path}:")
+    print(f"""
+
+
+
+{'-' * ( len(str(image_path))+ 14) }
+Traitement de {image_path}:
+{'-' * ( len(str(image_path))+ 14) }
+
+""")
 
     image = Image.open(image_path).convert('RGB').resize((224, 224))
 

@@ -6,7 +6,7 @@ import ijson
 import sys
 import os
 import glob
-import colorama
+from colorama import Fore, Back, Style
 
 session = ort.InferenceSession("insect_model.onnx")
 
@@ -56,19 +56,21 @@ def get_species_info(species_name):
     response = requests.get(search_url, params=params, headers=headers)
     
     if response.status_code != 200:
-        return "Erreur lors de la requête API"
+        return  Fore.RED + "Erreur lors de la requête API"
     
+
     data = response.json()
+    # print(data)
     if not data['results']:
-        return "Aucune espèce trouvée pour ce nom"
+        return Fore.RED + "Aucune espèce trouvée pour ce nom"
     
     species_id = data['results'][0]['key']
     
-    species_url = f"https://api.gbif.org/v1/species/{species_id}"
+    species_url =  Fore.BLUE + f"https://api.gbif.org/v1/species/{species_id}"
     species_response = requests.get(species_url, headers=headers)
     
     if species_response.status_code != 200:
-        return "Erreur lors de la récupération des détails"
+        return  Fore.RED + "Erreur lors de la récupération des détails"
     
     species_data = species_response.json()
     
@@ -88,7 +90,7 @@ def get_species_info(species_name):
         "url_gbif": f"https://www.gbif.org/species/{species_id}"
     }
     
-    return info
+    return  Fore.LIGHTGREEN_EX + info
 
 
 def process_image(image_path):
@@ -96,14 +98,11 @@ def process_image(image_path):
         print(f"Erreur : Le fichier {image_path} n'existe pas.")
         return
 
-    print(f"""
-
-
-
-{'-' * ( len(str(image_path))+ 14) }
+    seperator = '-' * ( len(str(image_path))+ 14)
+    print(Fore.CYAN + f"""
+{seperator}
 Traitement de {image_path}:
-{'-' * ( len(str(image_path))+ 14) }
-
+{seperator}
 """)
 
     image = Image.open(image_path).convert('RGB').resize((224, 224))
@@ -130,13 +129,13 @@ Traitement de {image_path}:
         predicted = np.argmax(output, axis=1)[0]
         classes = globals()[f"{name}_classes"]
         if predicted < len(classes):
-            print(f"  {name}: {classes[predicted]}")
+            print(Fore.GREEN + f" • {name}: {classes[predicted]}")
             full_name += f"{classes[predicted]} "
             name_str += f"{classes[predicted]} " if name != "espece" else ""
         else:
-            print(f"  {name}: Unknown")
-    print(full_name)
-    print(f"Informations sur l'espèce : {name_str.strip()}")
+            print(Fore.RED + f"  {name}: Unknown")
+    print(Fore.YELLOW + full_name)
+    print(Fore.LIGHTYELLOW_EX + f"Informations sur l'espèce : {name_str.strip()}\n")
     print(get_species_info(name_str.strip()))
 
 
